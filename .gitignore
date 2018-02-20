@@ -1,0 +1,4 @@
+.idea/
+PrivateVariables.py
+__pycache__/
+venv/
