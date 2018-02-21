@@ -15,6 +15,7 @@ polls_li = {}
 keyboard = {"inline_keyboard": [[{"text": "Very bad", "callback_data": "0"}], [{"text": "Not that good", "callback_data": "1"}], [{"text": "It's ok", "callback_data": "2"}], [{"text": "So nice!", "callback_data": "3"}]]}
 
 
+
 def main():
     global lastUpdate
     connection = http.client.HTTPSConnection('api.telegram.org')
@@ -59,6 +60,11 @@ def main():
         time.sleep(5)
 
 
+#######################################################################
+##########################  UPDATE HANDLERS  ##########################
+#######################################################################
+# This functions decide what to do, depending on the update received
+
 def handleUpdate(update):
     global lastUpdate
     # add many update types as you want to handle. Here i handle only "message" and "callback_query"
@@ -82,6 +88,8 @@ def handleMessage(update):
 
     # Handle only text messages
     if 'text' in update['message']:
+        #################### ADD YOUR CODE HERE!!!!!!!!!!!
+        ###
         text = update['message']['text']
         print(str(update["update_id"]) + " TEXT detected --> " + text)
 
@@ -104,6 +112,8 @@ def handleMessage(update):
             success = sendPollSolution(chatId, update['message']['reply_to_message']['message_id'])
         else:
             success = True
+        ###
+        #################### ADD YOUR CODE HERE!!!!!!!!!!!
     else:
         success = True
     return success
@@ -122,7 +132,8 @@ def handleCallbackQuery(update):
     data = update['callback_query']['data']
     print(str(update["update_id"]) + " VOTE detected --> chat_id = " + str(chatId) + ", message_id = " + str(messageId)
           + ", from = " + voteFrom + ", vote = " + str(data))
-
+    #################### ADD YOUR CODE HERE!!!!!!!!!!!
+    ###
     if username == voteFrom:
         print("You can't vote here! " + username)
     else:
@@ -140,8 +151,14 @@ def handleCallbackQuery(update):
             polls_li[chatId] = {messageId: {'reply_id': replyId, 'username': username, 'votes': newVote}}
     print(polls_li[chatId][messageId]['votes'])
     success = True
+    ###
+    #################### ADD YOUR CODE HERE!!!!!!!!!!!
     return success
 
+#########################################################################
+##########################  ANSWER GENERATORS  ##########################
+#########################################################################
+# This functions generates http request that we will send to Telegram Server.
 
 def sendMessage(chatId, text, replyId = 0, replyMode = False):
     connection = http.client.HTTPSConnection('api.telegram.org')

@@ -7,7 +7,9 @@ headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/
 connection = http.client.HTTPSConnection('api.telegram.org')
 options =['Enable AWS bot', 'Disable AWS bot', 'Get updates', 'Clean updates']
 
+#EDIT THIS TO SELECT WHAT YOU WANT TO EXECUTE
 optionsChosen = [options[1],options[2]]
+##########################
 
 for option in optionsChosen:
     if option == 'Enable AWS bot':

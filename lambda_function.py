@@ -2,8 +2,6 @@ import boto3
 import json
 import random
 import os
-import http.client
-import urllib
 
 botToken = os.environ['BOT_TOKEN']
 headers = {'Content-Type': 'application/json'}
@@ -19,6 +17,13 @@ polls_li = {}
 keyboard = {"inline_keyboard": [[{"text": "Very bad", "callback_data": "0"}], [{"text": "Not that good", "callback_data": "1"}], [{"text": "It's ok", "callback_data": "2"}], [{"text": "So nice!", "callback_data": "3"}]]}
 
 
+
+########################################################################
+##########################  REQUEST HANDLERS  ##########################
+########################################################################
+# This functions decide what to do, depending on the request received
+
+# MAIN FUNCTION, THIS ONE WILL DIRECLY COMUNICATE WITH AWS AND TRANSLATE THE HTTP REQUESTS
 def lambda_handler(event, context):
     # get http request from Telegram Server
     data = json.loads(event["body"])
@@ -38,7 +43,7 @@ def lambda_handler(event, context):
         }
     return response
 
-
+# This function handle an update with type "MESSAGE", depending on what is written on "text" field", it will answer
 def handleMessage(update):
     global blackList_li
     global cdKeyboard
@@ -56,29 +61,32 @@ def handleMessage(update):
     if 'text' in update['message']:
         text = update['message']['text']
         print(str(update["update_id"]) + " TEXT detected --> " + sender['first_name'] + ": " + text)
+
+        #################### ADD YOUR CODE HERE!!!!!!!!!!!
+        ###
         if ('mappa italia' == text) | ('Mappa italia' == text) | ('Mappa Italia' == text) | ('mappa Italia' == text):
-            success = sendPhoto(chatId, "AgADBAAD-KsxG15jyVPdctQFXg0YDFJHJhoABBE172LbwlnNTCYDAAEC")
+            response = sendPhoto(chatId, "AgADBAAD-KsxG15jyVPdctQFXg0YDFJHJhoABBE172LbwlnNTCYDAAEC")
         elif ('Make a poll about this' == text) & ('reply_to_message' in update['message']):
             replieduser = update['message']['reply_to_message']['from']['first_name']
-            success = sendKeyboard(chatId, 'What do you think about ' + replieduser + 'said?',
+            response = sendKeyboard(chatId, 'What do you think about ' + replieduser + 'said?',
                                    keyboard, update['message']['reply_to_message']['message_id'], True)
         elif '👀' == text:
-            success = sendAudio(chatId, idFileAudio)
+            response = sendAudio(chatId, idFileAudio)
         elif ('hello' in text) | ('Hello' in text):
-            success = sendVoice(chatId, idFileVoice)
+            response = sendVoice(chatId, idFileVoice)
         elif ('random message' in text) | ('Random message' in text):
             answer = random.choice(random_li)
-            success = sendMessage(chatId, answer)
+            response = sendMessage(chatId, answer)
         elif ('hello bot' in text) | ('Hello bot' in text):
-            success = sendMessage(chatId, 'Did i hear my name?')
+            response = sendMessage(chatId, 'Did i hear my name?',messageId, True)
         elif ((text == 'Results?') | (text == 'results?')) & ('reply_to_message' in update['message']):
             response = sendPollSolution(chatId, update['message']['reply_to_message']['message_id'])
+        ###
+        #################### ADD YOUR CODE HERE!!!!!!!!!!!
+
     return response
 
-
-# {chat_id: {message_id:
-#               {reply_id: reply_id, username:username, votes: {user:vote}}}
-#                result = (sumatoria votos)/(3*nÂºvotos) = value/(n_votes*3)
+# This function handle an update with type "CALLBACK_QUERY", it is used for collecting polls' votes
 def handleCallbackQuery(update):
     response = {
         'statusCode': '200',
@@ -90,14 +98,24 @@ def handleCallbackQuery(update):
     username = update['callback_query']['message']['reply_to_message']['from']['first_name']
     voteFrom = update['callback_query']['from']['first_name']
     data = update['callback_query']['data']
+
+    #################### ADD YOUR CODE HERE!!!!!!!!!!!
+    ###
     print(str(update["update_id"]) + " VOTE detected --> chat_id = " + str(chatId) + ", message_id = " + str(messageId)
           + ", from = " + voteFrom + ", vote = " + str(data))
     if username == voteFrom:
         print("You can't vote here! " + username)
     else:
         insertVoteDynamo(chatId, messageId, replyId, username, voteFrom, data, '0')
+    ###
+    #################### ADD YOUR CODE HERE!!!!!!!!!!!
     return response
 
+
+#########################################################################
+##########################  ANSWER GENERATORS  ##########################
+#########################################################################
+# This functions generates http responses that we will send to Telegram Server.
 
 def sendMessage(chatId, text, replyId=0, replyMode=False):
     print('chatID = ' + str(chatId) + ', text = ' + text)
@@ -235,6 +253,10 @@ def sendPhoto(chatId, photo, replyId=0, replyMode=False):
         }
     return response
 
+###########################################################################
+##########################  DYNAMO COMUNICATION  ##########################
+###########################################################################
+# This functions read and write on DynamoDB.
 
 def insertVoteDynamo(chatId, messageId, replyId, username, voteFrom, data, type):
     dynamo = boto3.client('dynamodb')
