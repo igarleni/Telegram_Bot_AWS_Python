@@ -2,28 +2,39 @@
 ###### *A simple Template*
 
 This little proyect is about managing your Telegram bot using your pc
-and AWS Lambda service. We will use **3 scripts:**
+and AWS Lambda service. I recommend you to read Telegram Bot API and understand how 
+ Telegram Server communicate with your Webhook (in this case Lambda AWS).
+ 
+We will use **3 scripts:**
  - 2 **Bot handlers:** *__lambda_function.py__* and *__PCHandler.py__*. The first one
 runs on AWS Lambda service, and the second one runs on your PC. Both do
  exaclty the same thing, responding to Telegram Server chat updates, but in a 
- different way. The big difference is where they are executed and how they communicate
- with Telegram Server.
+ different way. The big difference how they communicate with Telegram Server.
  
  - 1 **Switcher:** *__Switcher.py__*. It is used to change who will handle the bot (*lambda_function.py* or *PCHandler.py*)
 This last script is also useful for debugging.
 
  - 1 **PrivateVariables:** *__PrivateVariables.py__*. Here you will have to save your own
- private variables (ie: botToken).
+ private variables (ie: botToken, tableName of DynamoDB, etc).
+ 
+ 
+If you have never played with Telegram Bot, i recommend you to practise first with *CDHandler.py.*
+Otherwise, if you understand how Telegram Bot works and what is inside Telegrams JSON updates or you simply
+are an impatient person :D, you can directly read my *lambda_function.py.*
+
 ### 1. lambda_function.py
 
-So I guess that you have your Lambda function with an APIGateway configured. This
+So I guess that you have your Lambda AWS ready with an APIGateway configured. You only
+have to copy my code on your Lambda AWS and it will work. This
 lambda function is divided by 3 sections. The first 2 are mandatory, the last one
 is optional if you want to comunicate with a DynamoBD.
 
-- **REQUEST HANDLERS.** First, the section that reads the events that triggers him (in this
- case, Telegram HTTP requests). We just get them, convert
-it to JSON and send the JSON request file to the right Handler function. In my case,
-I only accept 2 types of updates: 'message' and 'callback_query'. Both have their
+- **REQUEST HANDLERS.** First, I read the Lambda events that triggers him. In this
+ case, Telegram HTTP requests from APIGateway, sent by Telegram Server, that contains
+ an JSON serialized file. We just read them,
+  convert it to python's JSON variable and send it to the right Handler function. In my case,
+I only accept 2 types of updates (you can find this updates inside JSON file): 
+'message' and 'callback_query'. Both have their
 own functions and generates the HTTP response depending on what they get. **You should
 modify this functions** depending on what you want to answer or what you want to do
 with the updates. I just give you some examples inside this handlers. Be careful with
@@ -31,7 +42,8 @@ with the updates. I just give you some examples inside this handlers. Be careful
 can simply save data on your script as a global variable. Keep in mind that if you do this,
 the info of this variable will be deleted each time you update your script and click 'save'.
 
-- **ANSWER GENERATORS.** This two Handler functions use other little functions to generate HTTP responses.
+- **ANSWER GENERATORS.** This two Handler functions described in previous chapter use
+ other little functions to generate HTTP responses.
 They are *sendMessage, sendKeyboard, sendPollSolution, sendVoice, sendVideo, sendAudio* and
 *sendPhoto*. All of them generates an HTTPresponse that Handlers will return to AWS
 Lambda manager, so then he can return it to Telegram Server. *It is mandatory* to send an
